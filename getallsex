@@ -1,0 +1,79 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+
+import pandas as pd
+import numpy as np
+import csv
+
+def extract_id_sex(wholetable, idtable):
+# Extract data from total tables
+# By comparing id from idtable with id from wholetable,
+# find gender's information response to id
+    subjid = pd.read_csv(wholetable)['NSPID'].tolist()
+    subjsex = pd.read_csv(wholetable)['SEX'].tolist()
+    subjdob = pd.read_csv(wholetable)['DOB'].tolist()
+    parid = open(idtable).read().splitlines()
+    
+    for i in range(len(subjid)):
+        subjid[i] = subjid[i].strip()
+    
+    arraydob = np.nan_to_num(np.array(subjdob))
+    subjdob = [str(int(e)) for e in list(arraydob)]
+
+
+    subjage = []
+# Now calculate ages
+# grade 06,id from 0 to 563
+    for i in range(564):
+        age_06 = 2006 - int(subjdob[i][0:4])
+        if age_06 == 2006:
+            age_06 = 0
+        subjage.append(age_06)
+# grade 08,id from 564 to 893
+    for i in range(564,894):
+        age_08 = 2008 - int(subjdob[i][0:4])
+        if age_08 == 2008:
+            age_08 = 0
+        subjage.append(age_08)
+
+    idpart = []
+    sexpart = []
+    dobpart = []
+    agepart = []
+    for i in range(len(subjid)):
+        if subjid[i] in parid:
+            idpart.append(subjid[i])
+            sexpart.append(subjsex[i])
+            dobpart.append(subjdob[i])
+            agepart.append(subjage[i])
+# I found the length of parid doesn't equal to the length of idpart
+# That means Some subjects have MRI data but have no behaviour data
+# So I want to list these subjects
+    difid = [val for val in parid if val not in idpart]
+    for i in difid:
+        print "%s have MRI data but not have sex information" % (i)
+
+# Transform 1/2 into female/male
+    gender = []
+    for i in sexpart:
+        if i == 1:
+            gender.append('f')
+        elif i == 2:
+            gender.append('m')
+        else:
+            gender.append(0)
+    return parid,gender,dobpart,agepart
+    
+
+if __name__ == '__main__':
+    wholedata = '/nfs/j3/userhome/huangtaicheng/workingdir/parcellation_MT/doc/dfsf/sub/NSPSUBJ.csv'
+    idtable = '/nfs/j3/userhome/huangtaicheng/workingdir/parcellation_MT/doc/dfsf/sub/subjID'
+    parid,gender,dob,age = extract_id_sex(wholedata,idtable) 
+    writer = csv.writer(file('sex.csv','wb'))
+    writer.writerow(['NSPID','gender','birthday','age'])
+    wholedata = zip(parid,gender,dob,age)
+    writer.writerows(wholedata)  
+
+
+
+ 

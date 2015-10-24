@@ -1,0 +1,77 @@
+#! /usr/bin/env python
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+
+"""Solve problems of data with just one run.Produce directory of xx.gfeat
+
+Author: Taicheng Huang @ BNU
+Reviewer: 
+"""
+
+import os
+import argparse
+import subprocess
+
+def main():
+    parser = argparse.ArgumentParser(description='Registrate run-level data into standard template,pay attention it can be used when data has 1 run')
+    parser.add_argument('-df',
+			type=argparse.FileType('r'),
+			required=True,
+			help='file record source data directory',
+			metavar='sessparentdirfile')
+    parser.add_argument('-sf',
+			type=argparse.FileType('r'),
+			required=True,
+			help='session id file, each row contains a sessionid',
+			metavar='sessidfile')
+    parser.add_argument('-fsd',
+			required=True,
+			help='functional subdirectory in each session',
+			metavar='func_subdir')
+    parser.add_argument('-rlf',
+			required=True,
+			help='functional rlf,rlf file should be located in '
+			     'fsd,if supplied , the rlf file will also be '
+			     'copied (default: all runs in the fsd)',
+			metavar='runlist_file')
+
+    args = parser.parse_args()
+
+    if args.df:
+	sesspar = os.path.abspath(args.df.read().strip())
+    
+    for sess in args.sf:
+	    sess = sess.strip()
+	    if not sess:
+	        continue
+	    sess_dir = os.path.join(sesspar, sess)
+	    tarsess_dir = os.path.join(sesspar, sess)
+	    if not os.path.exists(sess_dir):
+	        print 'Error: directory not exists:{0}'.format(sess_dir)
+	        continue
+		
+	    func_dir = os.path.join(sess_dir,args.fsd)
+	    if args.rlf:
+	        rlfflag = open(os.path.join(func_dir,args.rlf))
+            rlfinfo = rlfflag.read().strip().split('\n')      
+	    copenum = len(rlfinfo)
+	
+	    for i in range(copenum):
+		    os.chdir(os.path.join(func_dir,rlfinfo[i],'func.feat'))
+		    copes = 'cope'+str(i+1)+'.feat'
+        	    tarsess = os.path.join(tarsess_dir,'mt.gfeat',copes,'stats')
+        	    if not os.path.isdir(tarsess):
+                        os.makedirs(tarsess)
+	
+		    os.system('applywarp --ref=reg/standard --in=stats/cope1 --out=%s --warp=reg/highres2standard_warp --premat=reg/example_func2highres.mat --interp=spline' % (os.path.join(tarsess,'cope1.nii.gz')))
+		    os.system('applywarp --ref=reg/standard --in=stats/varcope1 --out=%s --warp=reg/highres2standard_warp --premat=reg/example_func2highres.mat --interp=spline' % (os.path.join(tarsess,'varcope1.nii.gz')))
+            os.system('applywarp --ref=reg/standard --in=stats/tstat1 --out=%s --warp=reg/highres2standard_warp --premat=reg/example_func2highres.mat --interp=spline' % (os.path.join(tarsess,'tstat1.nii.gz')))
+            os.system('applywarp --ref=reg/standard --in=stats/zstat1 --out=%s --warp=reg/highres2standard_warp --premat=reg/example_func2highres.mat --interp=spline' % (os.path.join(tarsess,'zstat1.nii.gz')))
+        # os.system('applywarp --ref=reg/standard --in=mean_func --out=%s --warp=reg/highres2standard_warp --premat=reg/example_func2highres.mat --interp=spline' % (os.path.join(tarsess,'mean_func.nii.gz'))) 
+
+    args.sf.close()
+    if args.df:
+	args.df.close()
+    rlfflag.close()
+
+if __name__ == '__main__':
+     main()

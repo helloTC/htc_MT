@@ -1,0 +1,69 @@
+#! /usr/bin/env python
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+
+"""Calculate index in task-related fMRI data.Included volume,psc,peak etc.
+
+Author: Taicheng Huang @ BNU
+Reviewer:
+"""
+
+import os
+import argparse
+import nibabel as nib
+import numpy as np
+
+def main():
+    parser = argparse.ArgumentParser(description='Calculate index in task-related fMRI data.Included volume,psc,peak etc')
+    parser.add_argument('-sesspar',
+                        type=argparse.FileType('r'),
+                        required=True,
+                        help='file record source data directory',
+                        metavar='sessparentdirfile')
+    parser.add_argument('-sessid',
+                        type=argparse.FileType('r'),
+                        required=True,
+                        help='session id file,each row contains a sessionid',
+                        metavar='sessidfile')
+    parser.add_argument('-task',
+                        required=True,
+                        help='task name')
+    parser.add_argument('-contrast',
+                        required=True,
+                        help='contrast name')
+    parser.add_argument('-meas',
+                        required=True,
+                        help='index you would like to get,such as volume,psc etc                        ')
+    parser.add_argument('-out',
+                        required=True,
+                        help='output file,index will be in this file')
+
+
+    args = parser.parse_args()
+
+    if args.sesspar:
+        sesspar = os.path.abspath(args.sessdf.read().strip())
+    
+    nsplen = len(args.sessid)
+    
+    data = np.zeros([91,109,91,len(args.sessid)])
+    for sess_index in range(len(args.sessid)):
+        sess = args.sessid[sess_index].strip()
+        if not sess:
+            continue
+        sess_dir = os.path.join(sesspar,sess,args.task,args.contrast)
+        # here need to improve
+        img = nib.load(os.path.join(sess_dir,'mt_z5.0_ff.nii.gz'))
+        # get 4D data
+        data[:,:,:,sess_index] = img.get_data()
+            
+    if args.meas == 'volume':
+        volume = np.zeros([len(args.sessid),data.max()])
+        for sess_index in range(len(args.sessid)):    
+            for area_index in range(data.max()):
+                volume[sess_index][area_index] = np.sum(data == (i+1))*(3*3*3)                      
+        
+        
+
+
+
+
