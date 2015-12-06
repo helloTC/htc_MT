@@ -1,8 +1,12 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode:nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et:
+
 import numpy as np
 import nibabel as nib
 import pandas as pd
 import shutil
 import scipy.io as sio
+import copy
 
 #This function is aim to calculate peak value of roi or stat picture and the peak value location
 #Input
@@ -158,3 +162,22 @@ def maskfile(fileurl,maskurl,method):
 		     		[mask_data[:,:,:,i] == j+1].mean()
 	return maskvalue
 
+def overlapper(oritemp,reftemp,thr):
+# oritemp and reftemp are all probabilistic atlas
+# Attention: reftemp is a set of 0-100 numbers,therefore 'thr' can only used 
+# for oritemp
+    orimask = copy.deepcopy(oritemp)
+    refmask = copy.deepcopy(reftemp)
+    orimask[orimask>thr] = 1.0
+    orimask[orimask!=1] = 0.0
+    refmask[refmask!=0] = 1.0
+    
+    size_ori = orimask.sum()
+    overlap_mask = orimask*refmask
+    size_overlap = overlap_mask.sum()
+    perc = size_overlap/size_ori   
+    return perc 
+
+
+
+	
