@@ -91,11 +91,11 @@ def cal_dice(image4d1,image4d2,n):
 			output[i,j]=dice_num
 	return output
 
-def dice(image1,image2):
-        image1_instead = image1
-        image2_instead = image2
-        image1_instead[image1_instead!=0]=1
-        image2_instead[image2_instead!=0]=1
+def dice(image1_ori,image2_ori):
+        image1 = copy.deepcopy(image1_ori)
+        image2 = copy.deepcopy(image2_ori)
+        image1[image1!=0]=1
+        image2[image2!=0]=1
         overlap = image1*image2
         dice_num = 2*overlap.sum()/(image1.sum()+image2.sum())
         return dice_num
@@ -178,6 +178,19 @@ def overlapper(oritemp,reftemp,thr):
     perc = size_overlap/size_ori   
     return perc 
 
+def intersection(a,b):
+# a, b are two lists
+# This function is aim to make intersection of sets
+    c = [val for val in a if val in b]
+    return c
 
+def union(a,b):
+# a, b are two lists
+# This function is aim to make union of sets
+    c = list(set(a+b))
 
+def difference_set(a,b):
+# a, b are two lists
+# This function is aim to make difference sets
+    c = [val for val in a if val not in b]
 	
